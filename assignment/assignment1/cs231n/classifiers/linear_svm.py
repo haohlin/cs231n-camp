@@ -31,10 +31,15 @@ def svm_loss_naive(W, X, y, reg):
     for j in range(num_classes):
       if j == y[i]:
         continue
+
       margin = scores[j] - correct_class_score + 1 # note delta = 1
       if margin > 0:
         loss += margin
+        dW[:,j] += X[i]
+        dW[:,y[i]] += -X[i]
 
+  dW /= num_train
+  dW += 2 * reg * W
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
@@ -63,12 +68,20 @@ def svm_loss_vectorized(W, X, y, reg):
   """
   loss = 0.0
   dW = np.zeros(W.shape) # initialize the gradient as zero
-
+  num_train = X.shape[0]
+  num_classes = W.shape[1]
   #############################################################################
   # TODO:                                                                     #
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
+
+  score = X.dot(W)
+  range_X = range(num_train)
+  loss_matrix_svm = score - score[range_X, y].reshape(-1,1) +1 # fancy indexing
+  loss_matrix_svm[range_X, y] = 0
+  loss_mask = loss_matrix_svm > 0
+  loss = np.sum(loss_matrix_svm[loss_mask]) / num_train + reg * np.sum(W * W)
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -84,7 +97,16 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
+
+  for i in range(num_classes):
+    dW[:,i] = np.sum(X[loss_mask[:, i]], axis=0)
+  for j in range(num_train):
+    dW[:,y[j]] += -np.sum(loss_mask[j]) * X[j]
+  dW /= num_train
+  dW += 2 * reg * W
   pass
+  # not good enough!!
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

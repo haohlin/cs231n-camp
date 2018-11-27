@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 class KNearestNeighbor(object):
   """ a kNN classifier with L2 distance """
@@ -65,16 +66,8 @@ class KNearestNeighbor(object):
     dists = np.zeros((num_test, num_train))
     for i in range(num_test):
       for j in range(num_train):
-        #####################################################################
-        # TODO:                                                             #
-        # Compute the l2 distance between the ith test point and the jth    #
-        # training point, and store the result in dists[i, j]. You should   #
-        # not use a loop over dimension.                                    #
-        #####################################################################
+        dists[i,j] = np.sum(np.square(X[i]-self.X_train[j]))
         pass
-        #####################################################################
-        #                       END OF YOUR CODE                            #
-        #####################################################################
     return dists
 
   def compute_distances_one_loop(self, X):
@@ -93,6 +86,7 @@ class KNearestNeighbor(object):
       # Compute the l2 distance between the ith test point and all training #
       # points, and store the result in dists[i, :].                        #
       #######################################################################
+      dists[i,:] = np.sum(np.square(X[i] - self.X_train), axis = 1).flatten()
       pass
       #######################################################################
       #                         END OF YOUR CODE                            #
@@ -106,9 +100,14 @@ class KNearestNeighbor(object):
 
     Input / Output: Same as compute_distances_two_loops
     """
-    num_test = X.shape[0]
-    num_train = self.X_train.shape[0]
-    dists = np.zeros((num_test, num_train)) 
+    #num_test = X.shape[0]
+    #num_train = self.X_train.shape[0]
+    #dists = np.zeros((num_test, num_train)) 
+    dot_value = -2 * X.dot(self.X_train.T)
+    test_sum = np.sum(X**2, axis=1).reshape(-1,1)
+    train_sum = np.sum(self.X_train**2, axis=1).flatten()
+    dists = dot_value + test_sum + train_sum
+
     #########################################################################
     # TODO:                                                                 #
     # Compute the l2 distance between all test points and all training      #
@@ -143,9 +142,8 @@ class KNearestNeighbor(object):
     num_test = dists.shape[0]
     y_pred = np.zeros(num_test)
     for i in range(num_test):
-      # A list of length k storing the labels of the k nearest neighbors to
-      # the ith test point.
-      closest_y = []
+      sorted_idx = np.argsort(dists[i])
+      closest_y = list(self.y_train[sorted_idx[:k]])
       #########################################################################
       # TODO:                                                                 #
       # Use the distance matrix to find the k nearest neighbors of the ith    #
@@ -154,6 +152,11 @@ class KNearestNeighbor(object):
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
       pass
+      y_count = []
+      for label in closest_y:
+        y_count.append(closest_y.count(label))
+      max_count_idx = np.argmax(np.array(y_count))
+      y_pred[i] = closest_y[max_count_idx]
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
@@ -162,9 +165,4 @@ class KNearestNeighbor(object):
       # label.                                                                #
       #########################################################################
       pass
-      #########################################################################
-      #                           END OF YOUR CODE                            # 
-      #########################################################################
-
     return y_pred
-
